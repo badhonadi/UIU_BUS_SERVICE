@@ -254,12 +254,12 @@ export const memoryDb = {
     };
   },
 
-  async cancelTicket(ticketId: string, userId: string): Promise<MemoryTicket | null> {
+  async cancelTicket(ticketId: string, userId: string, paymentStatus: 'PAID' | 'REFUNDED' = 'REFUNDED'): Promise<MemoryTicket | null> {
     initMemoryStore();
     const ticket = store.tickets.find(t => t.ticketId === ticketId && t.userId === userId);
     if (!ticket) return null;
     ticket.status = 'CANCELLED';
-    ticket.paymentStatus = 'REFUNDED';
+    ticket.paymentStatus = paymentStatus;
     persistStore();
     return ticket;
   }

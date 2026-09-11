@@ -9,6 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { ArrowLeft, Download, XCircle, Bus } from 'lucide-react';
 import { format } from 'date-fns';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 export default function TicketDetailPage({ params }: { params: Promise<{ ticketId: string }> }) {
   const resolvedParams = use(params);
@@ -16,6 +24,8 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
   const [ticket, setTicket] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelWithoutRefund, setCancelWithoutRefund] = useState(false);
 
   useEffect(() => {
     async function fetchTicket() {
@@ -35,20 +45,26 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
   }, [resolvedParams.ticketId]);
 
   const handleCancel = async () => {
-    if (!confirm('Are you sure you want to cancel this ticket? Refund will be processed.')) return;
     setCancelling(true);
     try {
       const res = await fetch(`/api/tickets/${resolvedParams.ticketId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'cancel' }),
+        body: JSON.stringify({ action: 'cancel', allowNoRefund: cancelWithoutRefund }),
       });
       if (res.ok) {
         const data = await res.json();
         setTicket(data.ticket);
+        setCancelDialogOpen(false);
+        setCancelWithoutRefund(false);
       } else {
         const errData = await res.json();
-        alert(errData.error || 'Failed to cancel ticket');
+        if (res.status === 409 && errData.requiresConfirmation) {
+          setCancelWithoutRefund(true);
+          setCancelDialogOpen(true);
+        } else {
+          alert(errData.error || 'Failed to cancel ticket');
+        }
       }
     } catch (err) {
       alert('Failed to cancel ticket');
@@ -155,6 +171,10 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
   }
 
   const isPast = new Date(ticket.travelDate) < new Date();
+  const cancellationDeadline = new Date(ticket.travelDate);
+  cancellationDeadline.setDate(cancellationDeadline.getDate() - 1);
+  cancellationDeadline.setHours(20, 0, 0, 0);
+  const cancellationIsLate = new Date() > cancellationDeadline;
 
   return (
     <div className="max-w-xl mx-auto space-y-6">
@@ -172,13 +192,13 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
 
       {/* Printable Ticket Card */}
       <Card
-        className="relative border-0 shadow-2xl overflow-hidden rounded-3xl bg-white bg-center bg-no-repeat"
+        className="relative border-0 shadow-2xl overflow-hidden rounded-3xl bg-white dark:bg-slate-900 bg-center bg-no-repeat"
         style={{
           backgroundImage: "url('/bus-background.png')",
           backgroundSize: '80% auto',
         }}
       >
-        <div className="absolute inset-0 bg-white/90" aria-hidden="true" />
+        <div className="absolute inset-0 bg-white/90 dark:bg-slate-900/80" aria-hidden="true" />
         <div className="bg-gradient-to-r from-[#F37021] to-[#E85D0A] text-white p-6 text-center relative">
           <div className="flex items-center justify-center gap-2 mb-1">
             <Bus size={24} />
@@ -195,30 +215,30 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
 
         <CardContent className="relative p-8 space-y-6">
           <div className="text-center border-b pb-4">
-            <h2 className="text-2xl font-extrabold text-[#1E3A5F]">{ticket.routeId?.routeName || 'UIU Route'}</h2>
+            <h2 className="text-2xl font-extrabold text-[#1E3A5F] dark:text-sky-300">{ticket.routeId?.routeName || 'UIU Route'}</h2>
             <p className="text-sm font-semibold text-[#F37021] mt-0.5">
               Round Trip - To and from UIU
             </p>
-            <div className="mt-2 inline-block bg-slate-100 px-4 py-1 rounded-full text-xs font-mono font-bold text-slate-700">
+            <div className="mt-2 inline-block bg-slate-100 dark:bg-slate-800 px-4 py-1 rounded-full text-xs font-mono font-bold text-slate-700 dark:text-slate-100">
               Ticket ID: {ticket.ticketId}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 rounded-xl bg-orange-50 border border-orange-100 p-4 text-sm">
+          <div className="grid grid-cols-2 gap-4 rounded-xl bg-orange-50 dark:bg-slate-800 border border-orange-100 dark:border-slate-700 p-4 text-sm">
             <div>
-              <span className="text-xs text-slate-400 font-semibold uppercase">Student Name</span>
-              <p className="font-bold text-slate-800 truncate">{ticket.studentName}</p>
+              <span className="text-xs text-slate-400 dark:text-slate-300 font-semibold uppercase">Student Name</span>
+              <p className="font-bold text-slate-800 dark:text-white truncate">{ticket.studentName}</p>
             </div>
             <div>
-              <span className="text-xs text-slate-400 font-semibold uppercase">Student ID</span>
-              <p className="font-bold text-slate-800 font-mono truncate">{ticket.studentId}</p>
+              <span className="text-xs text-slate-400 dark:text-slate-300 font-semibold uppercase">Student ID</span>
+              <p className="font-bold text-slate-800 dark:text-white font-mono truncate">{ticket.studentId}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-xs text-slate-400 font-semibold uppercase">Travel Date</span>
-              <p className="font-bold text-slate-800">{format(new Date(ticket.travelDate), 'EEE, MMM d, yyyy')}</p>
+              <p className="font-bold text-slate-800 dark:text-slate-100">{format(new Date(ticket.travelDate), 'EEE, MMM d, yyyy')}</p>
             </div>
             <div>
               <span className="text-xs text-slate-400 font-semibold uppercase">Seat Number</span>
@@ -226,11 +246,11 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
             </div>
             <div>
               <span className="text-xs text-slate-400 font-semibold uppercase">Bus Number</span>
-              <p className="font-mono font-bold text-slate-800">{ticket.busNumber}</p>
+              <p className="font-mono font-bold text-slate-800 dark:text-slate-100">{ticket.busNumber}</p>
             </div>
             <div>
               <span className="text-xs text-slate-400 font-semibold uppercase">Boarding Stop</span>
-              <p className="font-bold text-slate-800 truncate">{ticket.boardingStop}</p>
+              <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{ticket.boardingStop}</p>
             </div>
             <div>
               <span className="text-xs text-slate-400 font-semibold uppercase">Fare Paid</span>
@@ -238,7 +258,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
             </div>
             <div>
               <span className="text-xs text-slate-400 font-semibold uppercase">Status</span>
-              <p className="font-bold text-slate-800">{ticket.paymentStatus}</p>
+              <p className="font-bold text-slate-800 dark:text-slate-100">{ticket.paymentStatus}</p>
             </div>
           </div>
 
@@ -255,17 +275,53 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
             <div className="border-t pt-6 flex justify-center">
               <Button
                 variant="outline"
-                onClick={handleCancel}
+                onClick={() => {
+                  setCancelWithoutRefund(cancellationIsLate);
+                  setCancelDialogOpen(true);
+                }}
                 disabled={cancelling}
                 className="text-red-600 border-red-200 hover:bg-red-50 text-xs"
               >
                 <XCircle size={14} className="mr-1.5" />
-                {cancelling ? 'Cancelling...' : 'Cancel Ticket & Refund'}
+                {cancelling ? 'Cancelling...' : cancellationIsLate ? 'Cancel Ticket (No Refund)' : 'Cancel Ticket & Refund'}
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="dark:border-slate-700 dark:bg-slate-900">
+          <DialogHeader>
+            <DialogTitle className="dark:text-slate-100">
+              {cancelWithoutRefund ? 'Cancel without refund?' : 'Cancel this ticket?'}
+            </DialogTitle>
+            <DialogDescription className="dark:text-slate-300">
+              {cancelWithoutRefund
+                ? 'The refund deadline was 8:00 PM on the day before travel. If you continue, the ticket will be cancelled but no refund will be issued. Do you still want to cancel?'
+                : 'You can cancel this ticket before 8:00 PM on the day before travel and receive a refund.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setCancelDialogOpen(false)}
+              disabled={cancelling}
+            >
+              Keep Ticket
+            </Button>
+            <Button
+              type="button"
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              {cancelling ? 'Cancelling...' : cancelWithoutRefund ? 'Cancel Without Refund' : 'Confirm Cancellation'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

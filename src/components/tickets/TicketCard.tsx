@@ -58,7 +58,7 @@ export function TicketCard({ ticket }: TicketCardProps) {
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
           <div className="flex items-center gap-2">
             <Calendar size={16} className="text-slate-400" />
-            <span className="font-semibold text-slate-800 text-sm">
+            <span className="font-semibold text-slate-800 dark:text-slate-100 text-sm">
               {formatDateShort(new Date(ticket.travelDate))}
             </span>
           </div>
@@ -70,15 +70,15 @@ export function TicketCard({ ticket }: TicketCardProps) {
         <div className="grid grid-cols-2 gap-3 text-xs mb-4">
           <div>
             <span className="text-slate-400 uppercase font-medium">Student Name</span>
-            <p className="font-semibold text-slate-700 mt-0.5 truncate">{ticket.studentName}</p>
+            <p className="font-semibold text-slate-700 dark:text-slate-100 mt-0.5 truncate">{ticket.studentName}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase font-medium">Student ID</span>
-            <p className="font-semibold text-slate-700 font-mono mt-0.5 truncate">{ticket.studentId}</p>
+            <p className="font-semibold text-slate-700 dark:text-slate-100 font-mono mt-0.5 truncate">{ticket.studentId}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase font-medium">Bus No</span>
-            <p className="font-semibold text-slate-700 font-mono mt-0.5">{ticket.busNumber}</p>
+            <p className="font-semibold text-slate-700 dark:text-slate-100 font-mono mt-0.5">{ticket.busNumber}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase font-medium">Trip Type</span>
@@ -88,17 +88,17 @@ export function TicketCard({ ticket }: TicketCardProps) {
           </div>
           <div>
             <span className="text-slate-400 uppercase font-medium">Boarding</span>
-            <p className="font-semibold text-slate-700 mt-0.5 truncate">{ticket.boardingStop}</p>
+            <p className="font-semibold text-slate-700 dark:text-slate-100 mt-0.5 truncate">{ticket.boardingStop}</p>
           </div>
           <div>
             <span className="text-slate-400 uppercase font-medium">Ticket ID</span>
-            <p className="font-semibold text-slate-700 font-mono mt-0.5 truncate">{ticket.ticketId}</p>
+            <p className="font-semibold text-slate-700 dark:text-slate-100 font-mono mt-0.5 truncate">{ticket.ticketId}</p>
           </div>
         </div>
 
         <div className="flex items-center justify-between pt-2">
-          <span className="text-lg font-bold text-[#1E3A5F]">৳{ticket.price}</span>
-          <Button size="sm" variant="outline" className="text-xs gap-1 border-slate-300">
+          <span className="text-lg font-bold text-[#1E3A5F] dark:text-sky-300">৳{ticket.price}</span>
+          <Button size="sm" variant="outline" className="text-xs gap-1 border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
             <Link href={`/dashboard/tickets/${ticket.ticketId}`}>
               View Ticket <ArrowRight size={12} />
             </Link>

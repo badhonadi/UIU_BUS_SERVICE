@@ -7,6 +7,13 @@ import { memoryDb } from '@/lib/memory-db';
 export const dynamic = 'force-dynamic';
 const useMemoryDb = process.env.NODE_ENV !== 'production' && !process.env.MONGODB_URI;
 
+function getCancellationDeadline(travelDateValue: Date | string): Date {
+  const deadline = new Date(travelDateValue);
+  deadline.setDate(deadline.getDate() - 1);
+  deadline.setHours(20, 0, 0, 0);
+  return deadline;
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ ticketId: string }> }
@@ -80,7 +87,25 @@ export async function PATCH(
       if (ticket.status === 'CANCELLED') return NextResponse.json({ error: 'Ticket is already cancelled' }, { status: 400 });
       if (ticket.status === 'USED') return NextResponse.json({ error: 'Cannot cancel a used ticket' }, { status: 400 });
       if (body.action === 'cancel') {
-        const cancelledTicket = await memoryDb.cancelTicket(ticketId, session.user.id);
+        const now = new Date();
+        const travelDate = new Date(ticket.travelDate);
+        travelDate.setHours(0, 0, 0, 0);
+        if (travelDate <= now) {
+          return NextResponse.json({ error: 'Cannot cancel ticket for a past or current date' }, { status: 400 });
+        }
+        const cancellationDeadline = getCancellationDeadline(ticket.travelDate);
+        const isLateCancellation = new Date() > cancellationDeadline;
+        if (isLateCancellation && body.allowNoRefund !== true) {
+          return NextResponse.json(
+            { error: 'The refund deadline has passed. Confirm cancellation without refund.', requiresConfirmation: true },
+            { status: 409 }
+          );
+        }
+        const cancelledTicket = await memoryDb.cancelTicket(
+          ticketId,
+          session.user.id,
+          isLateCancellation ? 'PAID' : 'REFUNDED'
+        );
         return NextResponse.json({ message: 'Ticket cancelled successfully', ticket: cancelledTicket });
       }
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
@@ -126,8 +151,16 @@ export async function PATCH(
     }
 
     if (body.action === 'cancel') {
+      const cancellationDeadline = getCancellationDeadline(ticket.travelDate);
+      const isLateCancellation = new Date() > cancellationDeadline;
+      if (isLateCancellation && body.allowNoRefund !== true) {
+        return NextResponse.json(
+          { error: 'The refund deadline has passed. Confirm cancellation without refund.', requiresConfirmation: true },
+          { status: 409 }
+        );
+      }
       ticket.status = 'CANCELLED';
-      ticket.paymentStatus = 'REFUNDED';
+      ticket.paymentStatus = isLateCancellation ? 'PAID' : 'REFUNDED';
       await ticket.save();
 
       return NextResponse.json({

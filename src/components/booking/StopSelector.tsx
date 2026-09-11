@@ -16,20 +16,20 @@ export function StopSelector({ stops, selectedStop, onSelectStop, direction }: S
   const boardingStops = direction === 'TO_UIU' ? stops.filter((s) => s !== 'UIU') : ['UIU'];
 
   return (
-    <div className="space-y-2">
-      <Label className="text-sm font-medium text-slate-700">
+    <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <Label className="text-base font-semibold text-slate-800">
         {direction === 'TO_UIU' ? 'Select Boarding Stop' : 'Boarding Location'}
       </Label>
       <Select value={selectedStop} onValueChange={(val) => onSelectStop(val || '')}>
-        <SelectTrigger className="h-12 border-slate-200">
-          <div className="flex items-center gap-2">
-            <MapPin size={16} className="text-[#1E3A5F]" />
+        <SelectTrigger className="h-16 border-slate-300 bg-white px-4 text-base shadow-sm">
+          <div className="flex items-center gap-3">
+            <MapPin size={20} className="text-[#1E3A5F]" />
             <SelectValue placeholder="Choose a stoppage..." />
           </div>
         </SelectTrigger>
         <SelectContent>
           {boardingStops.map((stop) => (
-            <SelectItem key={stop} value={stop}>
+            <SelectItem key={stop} value={stop} className="py-3 text-base">
               {stop}
             </SelectItem>
           ))}

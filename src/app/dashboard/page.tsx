@@ -113,15 +113,15 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="space-y-3 text-xs text-slate-600">
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                <p className="font-semibold text-slate-800">Operating Days</p>
+                <p className="font-semibold text-slate-800 dark:text-slate-100">Operating Days</p>
                 <p className="mt-0.5">Saturday to Wednesday (No service Thu & Fri)</p>
               </div>
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                <p className="font-semibold text-slate-800">Ticket Deadline</p>
+                <p className="font-semibold text-slate-800 dark:text-slate-100">Ticket Deadline</p>
                 <p className="mt-0.5">Until 11:59 PM of the day before travel</p>
               </div>
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                <p className="font-semibold text-slate-800">Fare Rate</p>
+                <p className="font-semibold text-slate-800 dark:text-slate-100">Fare Rate</p>
                 <p className="mt-0.5">Flat ৳100 per ticket for any route</p>
               </div>
             </CardContent>
@@ -130,7 +130,7 @@ export default function DashboardPage() {
           <Card className="border-slate-200">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Bus size={18} className="text-[#1E3A5F]" /> Popular Routes
+                <Bus size={18} className="text-[#1E3A5F] dark:text-sky-300" /> Popular Routes
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -138,10 +138,10 @@ export default function DashboardPage() {
                 <Link
                   key={r.routeNumber}
                   href="/dashboard/book"
-                  className="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-50 transition-colors border border-transparent hover:border-slate-100"
+                  className="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-100 dark:hover:border-slate-700"
                 >
                   <div>
-                    <p className="font-semibold text-xs text-slate-800">{r.routeName}</p>
+                    <p className="font-semibold text-xs text-slate-800 dark:text-slate-100">{r.routeName}</p>
                     <p className="text-[11px] text-slate-400">{r.totalSeats} seats total</p>
                   </div>
                   <ArrowRight size={14} className="text-slate-400" />

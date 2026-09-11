@@ -72,15 +72,17 @@ export function ChatWidget() {
       {!isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 z-50 rounded-full h-14 w-14 bg-gradient-to-br from-[#F37021] to-[#E85D0A] shadow-xl hover:scale-105 transition-transform flex items-center justify-center text-white"
+          aria-label="Open AI Chat assistant"
+          className="fixed bottom-6 right-6 z-[2000] h-16 rounded-full bg-gradient-to-br from-[#F37021] to-[#E85D0A] px-7 text-white shadow-xl transition-transform hover:scale-105 flex items-center justify-center gap-3"
         >
-          <Bot size={28} />
+          <Bot size={30} />
+          <span className="text-base font-bold">AI Chat</span>
         </Button>
       )}
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-6 right-6 z-50 w-80 sm:w-96 h-[500px] shadow-2xl flex flex-col border-0 overflow-hidden">
+        <Card className="fixed bottom-4 right-4 z-[2000] w-[min(28rem,calc(100vw-2rem))] h-[min(38rem,calc(100vh-2rem))] shadow-2xl flex flex-col border-0 overflow-hidden">
           <CardHeader className="bg-[#1E3A5F] text-white p-4 flex flex-row items-center justify-between space-y-0">
             <div className="flex items-center gap-2">
               <div className="bg-[#F37021] p-1.5 rounded-lg">

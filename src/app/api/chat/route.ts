@@ -4,6 +4,31 @@ import { getChatResponse } from '@/lib/gemini';
 import { connectToDatabase } from '@/lib/mongodb';
 import Route from '@/models/Route';
 import Ticket from '@/models/Ticket';
+import { ROUTE_DATA } from '@/lib/constants';
+
+function getRequestedTravelDate(message: string): Date {
+  const dateMatch = message.match(/\b(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})\b/);
+  const dayOnlyMatch = message.match(/\b(\d{1,2})\s*(?:tarikh|তারিখ|date)\b/i);
+  const requestedDate = new Date();
+
+  if (dateMatch) {
+    const day = Number(dateMatch[1]);
+    const month = Number(dateMatch[2]);
+    const yearValue = Number(dateMatch[3]);
+    const year = yearValue < 100 ? 2000 + yearValue : yearValue;
+    return new Date(year, month - 1, day);
+  }
+
+  if (dayOnlyMatch) {
+    requestedDate.setDate(Number(dayOnlyMatch[1]));
+    requestedDate.setHours(0, 0, 0, 0);
+    return requestedDate;
+  }
+
+  requestedDate.setDate(requestedDate.getDate() + 1);
+  requestedDate.setHours(0, 0, 0, 0);
+  return requestedDate;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,7 +47,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get availability context if the message seems to be about availability
+    // Add date-aware availability context for seat and booking questions.
     let availabilityContext = '';
     const lowerMessage = message.toLowerCase();
     if (
@@ -36,25 +61,25 @@ export async function POST(request: NextRequest) {
       try {
         await connectToDatabase();
         const routes = await Route.find({ isActive: true });
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0, 0, 0, 0);
-        const dayAfter = new Date(tomorrow);
+        const travelDate = getRequestedTravelDate(message);
+        const dayAfter = new Date(travelDate);
         dayAfter.setDate(dayAfter.getDate() + 1);
 
         const availabilityData = await Promise.all(
           routes.map(async (route) => {
             const booked = await Ticket.countDocuments({
               routeId: route._id,
-              travelDate: { $gte: tomorrow, $lt: dayAfter },
+              travelDate: { $gte: travelDate, $lt: dayAfter },
               status: { $ne: 'CANCELLED' },
             });
-            return `${route.routeName}: ${route.totalSeats - booked}/${route.totalSeats} seats available for tomorrow`;
+            return `${route.routeName}: ${route.totalSeats - booked}/${route.totalSeats} seats available for ${travelDate.toISOString().slice(0, 10)}`;
           })
         );
         availabilityContext = availabilityData.join('\n');
-      } catch (e) {
-        // silently fail - chatbot can still respond without live data
+      } catch {
+        availabilityContext = ROUTE_DATA
+          .map((route) => `${route.routeName}: ${route.totalSeats} total seats; live booking count is unavailable right now`)
+          .join('\n');
       }
     }
 

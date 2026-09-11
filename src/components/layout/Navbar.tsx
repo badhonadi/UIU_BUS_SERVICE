@@ -23,6 +23,7 @@ import {
   ShoppingCart,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 
 const navLinks = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -52,8 +53,8 @@ export function Navbar() {
                   className={cn(
                     'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-orange-50 text-[#F37021]'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      ? 'bg-[#F37021] text-white shadow-sm dark:bg-[#F37021] dark:text-white'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
                   )}
                 >
                   <Icon size={16} />
@@ -65,6 +66,7 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           {session?.user && (
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -133,8 +135,8 @@ export function Navbar() {
                         className={cn(
                           'flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors',
                           isActive
-                            ? 'bg-orange-50 text-[#F37021]'
-                            : 'text-slate-600 hover:bg-slate-50'
+                            ? 'bg-[#F37021] text-white shadow-sm dark:bg-[#F37021] dark:text-white'
+                            : 'text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'
                         )}
                       >
                         <Icon size={18} />

@@ -14,7 +14,6 @@ interface SeatItem {
   number: number;
   label: string;
   zone: 1 | 2 | 3;
-  isReservedPriority: boolean;
   positionLabel: string;
 }
 
@@ -30,14 +29,12 @@ const FRONT_SEATS: SeatItem[] = [
     number: 1,
     label: 'Seat#01',
     zone: 1,
-    isReservedPriority: true,
     positionLabel: 'Front Right (Aisle)',
   },
   {
     number: 2,
     label: 'Seat#02',
     zone: 1,
-    isReservedPriority: true,
     positionLabel: 'Front Right (Window)',
   },
 ];
@@ -52,39 +49,31 @@ interface SeatRow {
 const ROWS: SeatRow[] = Array.from({ length: 12 }, (_, i) => {
   const rowNum = i + 1;
   const startNum = 3 + i * 4;
-  // Zone determination matching the uploaded diagram:
-  // Zone 1: Front rows (rows 1-2, seats 3-10) -> Priority (women, children, disabled)
-  // Zone 2: Middle rows (rows 3-7, seats 11-30) -> General
-  // Zone 3: Rear rows (rows 8-12, seats 31-50) -> Rear
+  // Zone determination matching the bus layout.
   const zone: 1 | 2 | 3 = rowNum <= 2 ? 1 : rowNum <= 7 ? 2 : 3;
-  const isPriority = zone === 1;
 
   const leftWindow: SeatItem = {
     number: startNum,
     label: `Seat#${String(startNum).padStart(2, '0')}`,
     zone,
-    isReservedPriority: isPriority,
     positionLabel: `Row ${rowNum} Left (Window)`,
   };
   const leftAisle: SeatItem = {
     number: startNum + 1,
     label: `Seat#${String(startNum + 1).padStart(2, '0')}`,
     zone,
-    isReservedPriority: isPriority,
     positionLabel: `Row ${rowNum} Left (Aisle)`,
   };
   const rightAisle: SeatItem = {
     number: startNum + 2,
     label: `Seat#${String(startNum + 2).padStart(2, '0')}`,
     zone,
-    isReservedPriority: isPriority,
     positionLabel: `Row ${rowNum} Right (Aisle)`,
   };
   const rightWindow: SeatItem = {
     number: startNum + 3,
     label: `Seat#${String(startNum + 3).padStart(2, '0')}`,
     zone,
-    isReservedPriority: isPriority,
     positionLabel: `Row ${rowNum} Right (Window)`,
   };
 
@@ -151,14 +140,6 @@ export function SeatSelector({
             ]
           )}
         >
-          {/* Priority yellow circle dot (matching uploaded picture) */}
-          {seat.isReservedPriority && !booked && (
-            <span
-              title="Reserved priority seat"
-              className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-400 ring-1 ring-white"
-            />
-          )}
-
           {/* Seat Icon / Number */}
           {booked ? (
             <Lock className="w-3.5 h-3.5 text-slate-500" />
@@ -197,7 +178,6 @@ export function SeatSelector({
           >
             <div className="bg-slate-900 text-white font-semibold text-[10px] px-2 py-0.5 rounded shadow whitespace-nowrap">
               {seat.label}
-              {seat.isReservedPriority ? ' • Priority' : ''}
             </div>
           </div>
         )}
@@ -248,10 +228,6 @@ export function SeatSelector({
         {/* Legend items */}
         <div className="flex flex-wrap items-center gap-4 text-xs text-slate-700 pt-1 border-t border-slate-200/60">
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-amber-400 border border-amber-500" />
-            <span className="text-slate-600">Reserved (Women/Disabled)</span>
-          </div>
-          <div className="flex items-center gap-1.5">
             <div className="w-4 h-4 rounded bg-emerald-50 border border-emerald-400" />
             <span>Available</span>
           </div>
@@ -267,11 +243,11 @@ export function SeatSelector({
           </div>
         </div>
 
-        {/* Zone description matching user image */}
+        {/* Zone description matching the bus layout */}
         <div className="flex flex-wrap items-center gap-3 pt-2 text-[11px] text-slate-500 border-t border-dashed border-slate-200">
           <div className="flex items-center gap-1.5">
             <span className="inline-block w-2.5 h-2.5 rounded-sm bg-slate-200 border border-slate-300" />
-            <span>Zone 1: Front & Priority</span>
+            <span>Zone 1: Front</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="inline-block w-2.5 h-2.5 rounded-sm bg-emerald-100 border border-emerald-300" />
@@ -377,7 +353,7 @@ export function SeatSelector({
 
             {/* Entrance Door Label */}
             <div className="mt-2 pt-2 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-500">
-              <span className="text-[10px] text-slate-400">Zone 1 (Priority)</span>
+              <span className="text-[10px] text-slate-400">Zone 1 (Front)</span>
               <div className="flex items-center gap-1 text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                 <span>🚪</span>
                 <span>Bus Entrance Door</span>
@@ -461,7 +437,7 @@ export function SeatSelector({
               {/* ZONE 1 (CABIN & FRONT ROWS) */}
               <div className="bg-slate-100 border border-slate-300 rounded-xl p-2.5 shrink-0 flex flex-col justify-between">
                 <div className="text-[10px] font-extrabold text-slate-600 uppercase tracking-wide mb-1 flex items-center justify-between">
-                  <span>Zone 1: Front / Priority</span>
+                  <span>Zone 1: Front</span>
                   <span className="w-2 h-2 rounded-full bg-amber-400" />
                 </div>
 
