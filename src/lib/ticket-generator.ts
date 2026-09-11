@@ -44,7 +44,7 @@ export async function generateQRCode(data: TicketData): Promise<string> {
 }
 
 export function generateTicketHTML(data: TicketData, qrCodeDataUrl: string): string {
-  const directionLabel = data.direction === 'TO_UIU' ? 'To UIU' : 'From UIU';
+  const directionLabel = 'Round Trip - To and from UIU';
   
   return `
     <!DOCTYPE html>

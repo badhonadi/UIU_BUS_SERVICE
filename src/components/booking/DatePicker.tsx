@@ -29,7 +29,7 @@ export function DatePicker({ selectedDate, onSelectDate }: DatePickerProps) {
               type="button"
               variant="outline"
               className={cn(
-                'w-full justify-start text-left font-normal h-12 border-slate-200',
+                'w-full justify-start text-left font-normal h-14 text-base border-slate-200',
                 !selectedDate && 'text-muted-foreground'
               )}
             />
@@ -44,6 +44,7 @@ export function DatePicker({ selectedDate, onSelectDate }: DatePickerProps) {
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
+            className="p-4 [--cell-size:--spacing(11)]"
             mode="single"
             selected={selectedDate}
             onSelect={(date) => {
@@ -57,7 +58,7 @@ export function DatePicker({ selectedDate, onSelectDate }: DatePickerProps) {
         </PopoverContent>
       </Popover>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 flex items-start gap-2">
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800 flex items-start gap-2">
         <AlertCircle size={16} className="text-amber-600 shrink-0 mt-0.5" />
         <div>
           <span className="font-semibold">Booking Policy:</span> Tickets are sold for next-day trips onward. No bus service on <strong>Thursday & Friday</strong>. Booking deadline is <strong>11:59 PM</strong> of the previous day.

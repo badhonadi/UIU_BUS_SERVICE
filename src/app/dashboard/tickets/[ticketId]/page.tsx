@@ -95,7 +95,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
     pdf.text(ticket.routeId?.routeName || 'UIU Route', pageWidth / 2, 58, { align: 'center' });
     pdf.setTextColor(243, 112, 33);
     pdf.setFontSize(11);
-    pdf.text(ticket.direction === 'TO_UIU' ? 'Towards UIU Campus' : 'Return from UIU Campus', pageWidth / 2, 66, { align: 'center' });
+    pdf.text('Round Trip - To and from UIU', pageWidth / 2, 66, { align: 'center' });
     pdf.setTextColor(30, 41, 59);
     pdf.setFontSize(10);
     pdf.text(`Ticket ID: ${ticket.ticketId}`, pageWidth / 2, 75, { align: 'center' });
@@ -197,7 +197,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
           <div className="text-center border-b pb-4">
             <h2 className="text-2xl font-extrabold text-[#1E3A5F]">{ticket.routeId?.routeName || 'UIU Route'}</h2>
             <p className="text-sm font-semibold text-[#F37021] mt-0.5">
-              {ticket.direction === 'TO_UIU' ? 'Towards UIU Campus' : 'Return from UIU Campus'}
+              Round Trip - To and from UIU
             </p>
             <div className="mt-2 inline-block bg-slate-100 px-4 py-1 rounded-full text-xs font-mono font-bold text-slate-700">
               Ticket ID: {ticket.ticketId}

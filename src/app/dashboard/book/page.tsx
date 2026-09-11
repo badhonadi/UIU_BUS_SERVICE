@@ -23,7 +23,7 @@ export default function BookTicketPage() {
   // Form states
   const [selectedRoute, setSelectedRoute] = useState<any | null>(null);
   const [travelDate, setTravelDate] = useState<Date | undefined>(undefined);
-  const [direction, setDirection] = useState<'TO_UIU' | 'FROM_UIU'>('TO_UIU');
+  const direction = 'TO_UIU' as const;
   const [boardingStop, setBoardingStop] = useState<string>('');
   const [selectedSeat, setSelectedSeat] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string>('BKASH');
@@ -220,7 +220,7 @@ export default function BookTicketPage() {
       <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
         {[
           { num: 1, label: 'Select Route' },
-          { num: 2, label: 'Date & Direction' },
+          { num: 2, label: 'Travel Date' },
           { num: 3, label: 'Stop & Seat' },
           { num: 4, label: 'Payment' },
         ].map((s) => (
@@ -285,42 +285,19 @@ export default function BookTicketPage() {
         </Card>
       )}
 
-      {/* Step 2: Date & Direction */}
+      {/* Step 2: Travel Date */}
       {step === 2 && (
         <Card className="border-slate-200">
           <CardHeader>
-            <CardTitle className="text-xl">Step 2: Travel Date & Direction</CardTitle>
-            <CardDescription>Selected Route: <span className="font-bold text-[#F37021]">{selectedRoute?.routeName}</span></CardDescription>
+            <CardTitle className="text-xl">Step 2: Select Travel Date</CardTitle>
+            <CardDescription>
+              Selected Route: <span className="font-bold text-[#F37021]">{selectedRoute?.routeName}</span>
+              <span className="block mt-1 text-emerald-700 font-medium">৳100 fare includes both the journey to UIU and the return trip.</span>
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Trip Direction</label>
-              <div className="grid grid-cols-2 gap-4">
-                <Button
-                  type="button"
-                  variant={direction === 'TO_UIU' ? 'default' : 'outline'}
-                  onClick={() => setDirection('TO_UIU')}
-                  className={`h-14 font-bold text-sm ${
-                    direction === 'TO_UIU' ? 'bg-[#1E3A5F] hover:bg-slate-800 text-white' : 'border-slate-300'
-                  }`}
-                >
-                  🚌 Towards UIU Campus
-                </Button>
-                <Button
-                  type="button"
-                  variant={direction === 'FROM_UIU' ? 'default' : 'outline'}
-                  onClick={() => setDirection('FROM_UIU')}
-                  className={`h-14 font-bold text-sm ${
-                    direction === 'FROM_UIU' ? 'bg-[#1E3A5F] hover:bg-slate-800 text-white' : 'border-slate-300'
-                  }`}
-                >
-                  🏠 Return from UIU
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Select Travel Date</label>
+              <label className="text-base font-semibold text-slate-700">Select Travel Date</label>
               <DatePicker selectedDate={travelDate} onSelectDate={setTravelDate} />
             </div>
 

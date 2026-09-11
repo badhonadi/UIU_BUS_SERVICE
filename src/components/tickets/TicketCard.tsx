@@ -81,9 +81,9 @@ export function TicketCard({ ticket }: TicketCardProps) {
             <p className="font-semibold text-slate-700 font-mono mt-0.5">{ticket.busNumber}</p>
           </div>
           <div>
-            <span className="text-slate-400 uppercase font-medium">Direction</span>
+            <span className="text-slate-400 uppercase font-medium">Trip Type</span>
             <p className="font-semibold text-[#F37021] mt-0.5">
-              {ticket.direction === 'TO_UIU' ? 'To UIU Campus' : 'From UIU Campus'}
+              Round Trip
             </p>
           </div>
           <div>
