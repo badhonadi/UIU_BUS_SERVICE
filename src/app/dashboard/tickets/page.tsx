@@ -56,11 +56,14 @@ export default function TicketsPage() {
           <TabsTrigger value="ALL" className="data-[state=active]:bg-[#F37021] data-[state=active]:text-white font-semibold">
             All Tickets
           </TabsTrigger>
-          <TabsTrigger value="CONFIRMED" className="data-[state=active]:bg-[#F37021] data-[state=active]:text-white font-semibold">
+          <TabsTrigger value="UPCOMING" className="data-[state=active]:bg-[#F37021] data-[state=active]:text-white font-semibold">
             Active / Upcoming
           </TabsTrigger>
           <TabsTrigger value="CANCELLED" className="data-[state=active]:bg-[#F37021] data-[state=active]:text-white font-semibold">
             Cancelled
+          </TabsTrigger>
+          <TabsTrigger value="PAST" className="data-[state=active]:bg-[#F37021] data-[state=active]:text-white font-semibold">
+            Past Trips
           </TabsTrigger>
         </TabsList>
 

@@ -25,7 +25,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error('Student ID and password are required');
         }
 
-        let userRecord: { id: string; name: string; email: string; studentId: string; passwordHash: string } | null = null;
+        let userRecord: { id: string; name: string; email: string; studentId: string; passwordHash: string; image?: string } | null = null;
 
         // Try MongoDB connection first
         try {
@@ -39,6 +39,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 email: mongoUser.email,
                 studentId: mongoUser.studentId,
                 passwordHash: mongoUser.password,
+                image: mongoUser.image,
               };
             }
           }
@@ -60,6 +61,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               email: memUser.email,
               studentId: memUser.studentId,
               passwordHash: memUser.password,
+              image: memUser.image,
             };
           }
         }
@@ -79,6 +81,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: userRecord.name,
           email: userRecord.email,
           studentId: userRecord.studentId,
+          image: userRecord.image,
         };
       },
     }),

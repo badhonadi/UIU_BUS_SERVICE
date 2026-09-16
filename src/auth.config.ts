@@ -2,6 +2,7 @@ import type { NextAuthConfig } from 'next-auth';
 
 export const authConfig = {
   providers: [],
+  trustHost: true,
   session: {
     strategy: 'jwt',
   },
@@ -12,14 +13,16 @@ export const authConfig = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.studentId = (user as any).studentId;
+        token.studentId = user.studentId;
+        token.picture = user.image;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id as string;
-        (session.user as any).studentId = token.studentId as string;
+        session.user.id = token.id as string;
+        session.user.studentId = token.studentId as string;
+        session.user.image = token.picture as string | undefined;
       }
       return session;
     },

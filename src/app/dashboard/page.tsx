@@ -11,9 +11,29 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Bus, ShoppingCart, Ticket as TicketIcon, Calendar, ArrowRight, Sparkles, MapPin } from 'lucide-react';
 import { ROUTE_DATA } from '@/lib/constants';
 
+type RecentTicket = {
+  _id: string;
+  ticketId: string;
+  busNumber: string;
+  travelDate: string;
+  direction: 'TO_UIU' | 'FROM_UIU';
+  boardingStop: string;
+  seatNumber: number;
+  price: number;
+  status: 'CONFIRMED' | 'CANCELLED' | 'USED';
+  paymentMethod: string;
+  studentName: string;
+  studentId: string;
+  routeId: {
+    routeName: string;
+    routeCode: string;
+    routeNumber: number;
+  };
+};
+
 export default function DashboardPage() {
   const { data: session } = useSession();
-  const [tickets, setTickets] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<RecentTicket[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

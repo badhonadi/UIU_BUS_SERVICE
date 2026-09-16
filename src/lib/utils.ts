@@ -36,12 +36,18 @@ export function isBookingAllowed(travelDate: Date): boolean {
   return true;
 }
 
+export function isTravelDateExpired(travelDate: Date): boolean {
+  const travelDateEnd = new Date(travelDate);
+  travelDateEnd.setHours(23, 59, 59, 999);
+  return new Date() > travelDateEnd;
+}
+
 export function getNextBookableDates(count: number = 14): Date[] {
   const dates: Date[] = [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  let currentDate = new Date(today);
+  const currentDate = new Date(today);
   currentDate.setDate(currentDate.getDate() + 1); // Start from tomorrow
 
   while (dates.length < count) {

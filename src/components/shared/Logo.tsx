@@ -7,9 +7,10 @@ interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
   className?: string;
+  href?: string;
 }
 
-export function Logo({ size = 'md', showText = true, className = '' }: LogoProps) {
+export function Logo({ size = 'md', showText = true, className = '', href = '/' }: LogoProps) {
   const sizes = {
     sm: { icon: 20, text: 'text-lg' },
     md: { icon: 28, text: 'text-2xl' },
@@ -17,7 +18,7 @@ export function Logo({ size = 'md', showText = true, className = '' }: LogoProps
   };
 
   return (
-    <Link href="/" className={`flex items-center gap-2 ${className}`}>
+    <Link href={href} className={`flex items-center gap-2 ${className}`}>
       <div className="relative">
         <div className="bg-gradient-to-br from-[#F37021] to-[#E85D0A] rounded-xl p-2 shadow-lg">
           <Bus size={sizes[size].icon} className="text-white" />

@@ -21,6 +21,7 @@ import {
   Ticket,
   MapPin,
   ShoppingCart,
+  UserRound,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
@@ -41,7 +42,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-6">
-          <Logo size="sm" />
+          <Logo size="sm" href="/dashboard" />
           <nav className="hidden md:flex items-center gap-1">
             {navLinks.map((link) => {
               const Icon = link.icon;
@@ -74,30 +75,34 @@ export function Navbar() {
                   <Button variant="ghost" className="flex items-center gap-2" />
                 }
               >
-                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#F37021] to-[#E85D0A] flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">
-                    {session.user.name?.charAt(0).toUpperCase()}
-                  </span>
+                <div className="h-9 w-9 overflow-hidden rounded-full bg-gradient-to-br from-[#F37021] to-[#E85D0A] flex items-center justify-center">
+                  {session.user.image ? (
+                    <img src={session.user.image} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <UserRound size={19} className="text-white" strokeWidth={1.5} />
+                  )}
                 </div>
                 <span className="hidden sm:inline text-sm font-medium">
                   {session.user.name}
                 </span>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="px-2 py-2">
-                  <p className="text-sm font-medium">{session.user.name}</p>
-                  <p className="text-xs text-slate-500">{session.user.email}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">ID: {session.user.studentId}</p>
+              <DropdownMenuContent align="end" className="w-64">
+                <div className="px-3 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-11 w-11 overflow-hidden rounded-full bg-gradient-to-br from-[#F37021] to-[#E85D0A] flex items-center justify-center">
+                      {session.user.image ? <img src={session.user.image} alt="" className="h-full w-full object-cover" /> : <UserRound size={23} className="text-white" strokeWidth={1.5} />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{session.user.name}</p>
+                      <p className="truncate text-xs text-slate-500">{session.user.email}</p>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-400">ID: {session.user.studentId}</p>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                  <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer w-full">
-                    <LayoutDashboard size={14} /> Dashboard
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/dashboard/tickets" className="flex items-center gap-2 cursor-pointer w-full">
-                    <Ticket size={14} /> My Tickets
+                  <Link href="/dashboard/profile" className="flex items-center gap-2 cursor-pointer w-full">
+                    <UserRound size={14} /> My Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -122,7 +127,7 @@ export function Navbar() {
             </SheetTrigger>
             <SheetContent side="left" className="w-72">
               <div className="mt-6">
-                <Logo size="sm" />
+                <Logo size="sm" href="/dashboard" />
                 <nav className="mt-8 flex flex-col gap-1">
                   {navLinks.map((link) => {
                     const Icon = link.icon;

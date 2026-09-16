@@ -8,6 +8,7 @@ export interface IUser extends Document {
   password: string;
   ucamId?: string;
   phone?: string;
+  image?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +45,9 @@ const UserSchema = new Schema<IUser>(
     phone: {
       type: String,
       trim: true,
+    },
+    image: {
+      type: String,
     },
   },
   {

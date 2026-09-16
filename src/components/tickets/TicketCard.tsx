@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Bus, Calendar, MapPin, ArrowRight, Download, QrCode } from 'lucide-react';
-import { formatDateShort } from '@/lib/utils';
+import { formatDateShort, isTravelDateExpired } from '@/lib/utils';
 import Link from 'next/link';
 
 interface TicketCardProps {
@@ -30,7 +30,7 @@ interface TicketCardProps {
 }
 
 export function TicketCard({ ticket }: TicketCardProps) {
-  const isPast = new Date(ticket.travelDate) < new Date();
+  const isPast = isTravelDateExpired(new Date(ticket.travelDate));
 
   return (
     <Card className="overflow-hidden border-slate-200 hover:shadow-md transition-shadow">

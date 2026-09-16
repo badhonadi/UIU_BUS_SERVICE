@@ -1,149 +1,183 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ROUTE_DATA, TICKET_PRICE } from './constants';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+const genAI = new GoogleGenerativeAI(apiKey);
 
-function normalizeQuery(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-}
+export const SYSTEM_PROMPT = `You are UIU RideWave AI Assistant — the official intelligent transit assistant for United International University (UIU) bus service.
+Your role is to help UIU students, faculty, and visitors with bus routes, stoppages, seat availability, ticket bookings, fares, travel rules, and city-wide commute directions.
 
-function findRelevantRoutes(message: string) {
-  const query = normalizeQuery(message);
-  return ROUTE_DATA
-    .map((route) => {
-      const routeTerms = [route.routeName, route.routeCode, ...route.stops]
-        .filter((stop) => stop !== 'UIU')
-        .map(normalizeQuery)
-        .filter((term) => term.length > 2);
-      const matchedTerms = routeTerms.filter((term) => query.includes(term));
-      return { route, score: matchedTerms.length ? Math.max(...matchedTerms.map((term) => term.length)) : 0 };
-    })
-    .filter(({ score }) => score > 0)
-    .sort((first, second) => second.score - first.score)
-    .map(({ route }) => route);
-}
+=== UIU CAMPUS & OPERATIONAL RULES ===
+- Campus Location: United City, Madani Avenue, Badda, Dhaka 1212 (near 100 Feet road / Notun Bazar).
+- Fare: Flat ৳${TICKET_PRICE} (100 BDT) per trip for any route.
+- Weekend Rules (CRITICAL): Thursday and Friday are UIU weekends. UIU buses DO NOT operate on Thursday and Friday. There is NO service on Thursday and Friday.
+- Booking Window: Students must book tickets before midnight of the travel date. Tickets can be booked for tomorrow or any future service date. Same-day bookings are not allowed.
+- Payment Methods: bKash, Nagad, Rocket, Bank Transfer, and UIU UCAM balance.
+- Ticket & QR Code: Once booked, an e-ticket with a unique QR code is generated. Students can view or download the ticket PDF from Dashboard -> My Tickets, and present the QR code to the bus conductor.
+- Seat Capacity: Each bus has 50 seats. Total capacity depends on how many buses ply that route.
 
-function getRequestedDateFromContext(availabilityContext: string): Date | null {
-  const dateMatch = availabilityContext.match(/for (\d{4}-\d{2}-\d{2})/);
-  if (!dateMatch) return null;
-  const date = new Date(`${dateMatch[1]}T00:00:00`);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
+=== THE 6 OFFICIAL UIU BUS ROUTES ===
+1. Route-1 (Dhanmondi – UIU) [Code: DMD | 6 Buses | 300 Seats]
+   Stops: Zigatola Bus Stop -> Dhanmondi Keari Plaza -> Shankar Bus Stop -> Mohammadpur BRTC Bus Stop -> Manik Mia Avenue -> BARC, Farmgate -> Kakoli -> Gulshan 2 -> Notun Bazar -> UIU.
+   Special note: No stoppage between Farmgate and Kakoli. Buses use the Dhaka Elevated Expressway when returning from UIU.
 
-function getLocalChatResponse(message: string, availabilityContext = ''): string {
-  const query = message.toLowerCase();
-  const matchedRoutes = findRelevantRoutes(message);
-  const asksAboutSeats = /seat|available|availability|আসন|সিট|খালি|ফাঁকা|ticket|টিকিট/.test(query);
-  const asksForRoute = /route|বাস|bus|যাব|যাওয়া|যেতে|কোন পথে|কোথা থেকে|location|রুট/.test(query);
+2. Route-2 (Palashi – UIU) [Code: PALASHI | 3 Buses | 150 Seats]
+   Stops: Palashi -> Azimpur -> Dhaka College -> City College -> West Kalabagan -> Panthapath -> BARC, Farmgate -> Kakoli -> Gulshan 2 -> Notun Bazar -> UIU.
+   Special note: No stoppage between Farmgate and Kakoli. Buses use the Dhaka Elevated Expressway when returning from UIU.
 
-  if (matchedRoutes.length > 0 && (asksAboutSeats || asksForRoute)) {
-    const routeDetails = matchedRoutes.slice(0, 3).map((route) => {
-      const stops = route.stops.filter((stop) => stop !== 'UIU').join(' → ');
-      return `Route-${route.routeNumber} ${route.routeName}\nBus stands: ${stops}\nCapacity: ${route.totalSeats} seats`;
-    }).join('\n\n');
-    const relevantAvailability = availabilityContext
-      .split('\n')
-      .filter((line) => matchedRoutes.some((route) => normalizeQuery(line).includes(normalizeQuery(route.routeName))))
-      .join('\n');
-    const liveSeats = relevantAvailability ? `\n\nLive availability:\n${relevantAvailability}` : '';
-    const requestedDate = getRequestedDateFromContext(relevantAvailability);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dateWarning = requestedDate && requestedDate <= today
-      ? '\n\nএই তারিখে same-day/past booking করা যাবে না। আগামীকালের জন্য বা তার পরের দিনের জন্য Book Ticket থেকে তারিখ নির্বাচন করুন।'
-      : '';
-    return `${routeDetails}${liveSeats}${dateWarning}\n\nTicket price ৳${TICKET_PRICE}. No service Thursday and Friday. 🚌`;
+3. Route-3 (Mirpur – UIU) [Code: MIRPUR | 3 Buses | 150 Seats]
+   Stops: Technical -> Mirpur 1 -> Mirpur 2 -> Mirpur 10 -> Mirpur 11 -> Mirpur 12 -> ECB Chattar (Kalshi) -> Kuril Flyover -> Notun Bazar -> UIU.
+
+4. Route-4 (Signboard – UIU) [Code: SIGN | 3 Buses | 150 Seats]
+   Stops: Signboard Mor -> Hanif Flyover -> Manik Nagar -> Mugdapara -> Bashabo -> Khilgaon Police Fari -> Abul Hotel -> Rampura Bridge -> Aftab Nagar -> Notun Bazar -> UIU.
+
+5. Route-5 (Jatrabari – UIU) [Code: JBARI | 2 Buses | 100 Seats]
+   Stops: Jatrabari Mor -> Manik Nagar -> Mugdapara -> Bashabo -> Khilgaon Police Fari -> Abul Hotel -> Rampura Bridge -> Aftab Nagar -> Sunvally -> Notun Bazar -> UIU.
+
+6. Route-6 (Uttara – UIU) [Code: UTTARA | 1 Bus | 50 Seats]
+   Stops: Abdullahpur -> House Building -> Azampur -> Jashimuddin -> Airport -> Khilkhet -> Kuril Flyover -> 300 ft -> Bashundhara -> UIU.
+
+=== REAL-WORLD DHAKA GEOGRAPHY & TRANSIT KNOWLEDGE ===
+You possess deep knowledge of Dhaka city streets, intersections, and neighborhoods. When a user asks how to get to UIU from an area not explicitly named as a bus stoppage, recommend the nearest, fastest, and most convenient UIU bus stoppages:
+- Agargaon:
+  * Best/Closest option: Go to BARC (Farmgate) or Manik Mia Avenue to board Route-1 (Dhanmondi) or Route-2 (Palashi). From Agargaon, it is only 1 stop by Metro Rail to Farmgate, or 5-10 minutes by rickshaw/auto via Bijoy Sarani / Khamarbari.
+  * Alternative: Take Metro Rail north to Mirpur 10 (approx 5 mins) and board Route-3 (Mirpur).
+- Shyamoli / Kalyanpur / Gabtoli: Board Route-3 at Technical or Route-1 at Mohammadpur BRTC.
+- Mohammadpur, Town Hall, Asad Gate: Board Route-1 at Mohammadpur BRTC or Manik Mia Avenue.
+- Dhanmondi (all roads, Sobhanbag, Rapa Plaza, Russell Square): Board Route-1 at Keari Plaza, Shankar, or Zigatola; or Route-2 at Kalabagan / City College.
+- Science Lab, Elephant Road, New Market, Nilkhet, BUET, DU / TSC: Board Route-2 at Dhaka College, City College, Azimpur, or Palashi.
+- Panthapath, Green Road, Sukrabad: Board Route-2 at Panthapath or West Kalabagan.
+- Farmgate, Tejgaon, Indira Road, Bijoy Sarani: Board Route-1 or Route-2 at BARC (Farmgate) or Manik Mia Avenue.
+- Mirpur (1, 2, 6, 7, 10, 11, 12, 13, 14, Kazipara, Shewrapara): Board Route-3 at nearest Mirpur stop (Technical, Mirpur 1, 2, 10, 11, or 12).
+- ECB Chattar, Kalshi, Matikata, Cantonment: Board Route-3 at ECB Chattar (Kalshi).
+- Kuril, Jamuna Future Park, Kaikobad, Bashundhara Gate: Board Route-3 or Route-6 at Kuril Flyover or Bashundhara.
+- Kakoli, Banani, Mohakhali, Chairman Bari: Board Route-1 or Route-2 at Kakoli; or head to Kuril Flyover.
+- Gulshan 1 & 2, Shooting Club, Police Plaza: Board Route-1 or Route-2 at Gulshan 2 or Kakoli; or Notun Bazar.
+- Rampura, Banasree, Aftab Nagar, TV Center: Board Route-4 or Route-5 at Rampura Bridge or Aftab Nagar.
+- Khilgaon, Malibagh, Mouchak, Shantinagar, Rajarbagh: Board Route-4 or Route-5 at Abul Hotel or Khilgaon Police Fari.
+- Bashabo, Mugdapara, Manik Nagar, Sayedabad, Gopibagh: Board Route-4 or Route-5 at Bashabo, Mugdapara, or Manik Nagar.
+- Jatrabari, Donia, Shonir Akhra, Rayerbagh: Board Route-5 at Jatrabari Mor.
+- Signboard, Sanarpar, Narayanganj link road: Board Route-4 at Signboard Mor.
+- Uttara (Sectors 1-18), Abdullahpur, Azampur, Airport, Khilkhet, Nikunja: Board Route-6 at Abdullahpur, House Building, Azampur, Jashimuddin, Airport, or Khilkhet.
+- Purbachal, 300 Feet, Jalshiri: Board Route-6 at 300 ft or Bashundhara.
+
+=== RESPONSE GUIDELINES (VERY IMPORTANT) ===
+- ALWAYS GIVE THE EXACT, DIRECT ANSWER FIRST. The user needs a precise, direct answer to their specific question — do not dump irrelevant information or list all routes unless explicitly asked.
+- SPECIFIC ROUTE QUERY: If the user asks about a specific route (e.g., Mirpur, Dhanmondi, Uttara, Palashi, Jatrabari, Signboard), ONLY answer for that specific route. State the exact date, route name, available seats, and total seats. DO NOT dump or mention the other routes!
+- WEEKEND DAYS: If the user asks about Thursday or Friday (e.g. "18 tarikh" which is Friday), directly state: "Na, 18 tarikh (Shukrobar) UIU-er bus service bondho thakbe. Brihaspotibar o Shukrobar UIU-er weekend, tai ei 2 din bus chole na."
+- LOCATION GUIDANCE: When asked about a starting area (e.g., "Agargaon theke kon route kache?"), state the best and closest option directly first (e.g., Route-1 or Route-2 from BARC/Farmgate or Manik Mia Ave via 1 Metro stop), then briefly mention alternatives if any.
+- TONE & LANGUAGE: Reply in the same language/tone as the user (Bangla, Banglish, or English). Keep answers clear, direct, and helpful with minimal emoji (🚌, 📍).`;
+
+function sanitizeHistory(history: { role: string; content: string }[]) {
+  const valid: { role: 'user' | 'model'; parts: { text: string }[] }[] = [];
+
+  for (const msg of history) {
+    if (!msg.content || !msg.content.trim()) continue;
+    const role = msg.role === 'user' ? 'user' : 'model';
+
+    // Gemini API requires the first message in history to have role 'user'
+    if (valid.length === 0 && role === 'model') continue;
+
+    // Merge consecutive messages with the same role
+    if (valid.length > 0 && valid[valid.length - 1].role === role) {
+      valid[valid.length - 1].parts[0].text += '\n' + msg.content;
+    } else {
+      valid.push({ role, parts: [{ text: msg.content.trim() }] });
+    }
   }
 
-  if (asksAboutSeats && availabilityContext) {
-    return `Here is the latest available seat information for the next service date:\n${availabilityContext}\n\nFor a specific date, open Book Ticket and select that date to see the exact live seat count. 🚌`;
+  // Ensure last message in history before sendMessage is 'model' (or history is empty)
+  // because sendMessage will send the current 'user' message
+  if (valid.length > 0 && valid[valid.length - 1].role === 'user') {
+    valid.pop();
   }
 
-  if (asksForRoute) {
-    return `I can help you choose a UIU bus route. Tell me your starting area, for example “Mirpur 10”, “Dhanmondi”, “Jatrabari”, “Signboard”, “Palashi”, or “Uttara”. I will show the matching bus stands and route. 🚌`;
-  }
-
-  return `I can help with UIU transportation: route selection, bus stands, ticket price, seat availability, and booking. Ask something like “Mirpur 10 থেকে UIU কোন bus?”, “Mirpur route-এ কয়টা seat খালি?”, or “Dhanmondi bus কোথা থেকে ছাড়ে?” 🚌`;
+  return valid.slice(-6);
 }
-
-const SYSTEM_PROMPT = `You are UIU RideWave Assistant — a friendly and helpful AI chatbot for United International University (UIU) bus service.
-
-You help UIU students with:
-1. Finding the right bus route based on their location
-2. Understanding bus stops and routes
-3. Checking seat availability
-4. Explaining how to book tickets
-5. General transport-related queries
-
-Key Information:
-- UIU is located in Bashundhara R/A, Dhaka, Bangladesh
-- All tickets cost ৳${TICKET_PRICE} (100 BDT) per trip, any route
-- No bus service on Thursday and Friday (UIU weekend)
-- Students must book tickets before midnight of the travel date
-- Students can book from tomorrow onwards (not same day)
-
-Available Routes:
-${ROUTE_DATA.map(r => `Route-${r.routeNumber} (${r.routeName}): ${r.totalBuses} buses, ${r.totalSeats} seats\n  Stops: ${r.stops.join(' → ')}\n  ${r.remarks ? 'Note: ' + r.remarks : ''}`).join('\n\n')}
-
-Bus Numbering Format: UIU_[ROUTE_CODE]_[NUMBER] (e.g., UIU_DMD_001 for Dhanmondi Route Bus 1)
-
-Route Codes: DMD (Dhanmondi), PALASHI (Palashi), MIRPUR (Mirpur), SIGN (Signboard), JBARI (Jatrabari), UTTARA (Uttara)
-
-Rules:
-- Be concise and helpful
-- You can respond in both Bangla and English
-- For a location-specific question, answer only with the route(s) that contain that location. Never add unrelated routes.
-- Treat hyphens, spaces, and spelling variants as equivalent, such as "mirpur-11" and "Mirpur 11".
-- If a student asks where to board, list the matching bus stand and say which route it belongs to.
-- If live availability is provided, answer with the exact route and date from that context; never invent seat counts.
-- If asked about seat availability, mention that they should check the booking page for real-time availability
-- Always be friendly and use emoji occasionally
-- If you don't know something, say so honestly
-- Guide students to the booking page when appropriate`;
-
 export async function getChatResponse(
   message: string,
   history: { role: string; content: string }[] = [],
-  availabilityContext?: string
+  contextData?: string
 ): Promise<string> {
-  const hasRouteSpecificQuestion = findRelevantRoutes(message).length > 0 &&
-    /route|বাস|bus|যাব|যাওয়া|যেতে|কোন পথে|কোথা থেকে|location|রুট|seat|available|ticket|টিকিট|সিট/.test(message.toLowerCase());
+  const userQuery = message.trim();
+  const formattedHistory = sanitizeHistory(history);
 
-  if (hasRouteSpecificQuestion) {
-    return getLocalChatResponse(message, availabilityContext);
+  const systemPromptWithContext = `${SYSTEM_PROMPT}${
+    contextData ? `\n\n=== LIVE SYSTEM & DATABASE CONTEXT ===\n${contextData}` : ''
+  }`;
+
+  const candidateModels = ['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+
+  for (const modelName of candidateModels) {
+    try {
+      const model = genAI.getGenerativeModel({
+        model: modelName,
+        systemInstruction: systemPromptWithContext,
+      });
+
+      const chat = model.startChat({
+        history: formattedHistory,
+      });
+
+      const result = await chat.sendMessage(userQuery);
+      const response = await result.response;
+      const text = response.text();
+      if (text && text.trim()) {
+        return text;
+      }
+    } catch (err: any) {
+      console.warn(`Gemini model ${modelName} failed:`, err?.message || err);
+    }
   }
 
-  if (!process.env.GEMINI_API_KEY) {
-    return getLocalChatResponse(message, availabilityContext);
-  }
-
-  try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
-
-    const chatHistory = history.map((msg) => ({
-      role: msg.role === 'user' ? 'user' as const : 'model' as const,
-      parts: [{ text: msg.content }],
-    }));
-
-    const chat = model.startChat({
-      history: [
-        {
-          role: 'user',
-          parts: [{ text: 'System context: ' + SYSTEM_PROMPT + (availabilityContext ? '\n\nCurrent Availability Info:\n' + availabilityContext : '') }],
-        },
-        {
-          role: 'model',
-          parts: [{ text: 'Understood! I\'m UIU RideWave Assistant. I\'m ready to help students with bus route information, ticket booking guidance, and any transport-related queries. How can I help you today? 🚌' }],
-        },
-        ...chatHistory,
-      ],
-    });
-
-    const result = await chat.sendMessage(message);
-    const response = await result.response;
-    return response.text();
-  } catch (error) {
-    console.error('Gemini API error:', error);
-    return getLocalChatResponse(message, availabilityContext);
-  }
+  // Fallback if AI service is temporarily unreachable
+  return generateIntelligentFallback(userQuery, contextData);
 }
+
+function generateIntelligentFallback(message: string, contextData = ''): string {
+  const query = message.toLowerCase();
+
+  // Location question
+  if (query.includes('agargaon') || query.includes('আগারগাঁও')) {
+    return `Agargaon theke UIU jawar jonno shobcheye kache hobe **BARC (Farmgate)** ba **Manik Mia Avenue** stoppage (Route-1 Dhanmondi ba Route-2 Palashi). Agargaon theke Metro Rail e mattro 1 stop gelei Farmgate neme bus e uthte parben! 🚌`;
+  }
+
+  // Check if weekend in contextData
+  if (contextData.includes('UIU Weekend (No service): YES')) {
+    return `Oi tarikh-e UIU-er bus service bondho thakbe. **Brihaspotibar o Shukrobar (Thursday & Friday)** UIU-er weekend, tai ei 2 din kono route-e bus chole na. 🚌`;
+  }
+
+  // Extract specific route if mentioned
+  const routeKeywords: Record<string, string> = {
+    mirpur: 'Route-3 (Mirpur – UIU)',
+    মিরপুর: 'Route-3 (Mirpur – UIU)',
+    dhanmondi: 'Route-1 (Dhanmondi – UIU)',
+    ধানমন্ডি: 'Route-1 (Dhanmondi – UIU)',
+    palashi: 'Route-2 (Palashi – UIU)',
+    পলাশী: 'Route-2 (Palashi – UIU)',
+    signboard: 'Route-4 (Signboard – UIU)',
+    সাইনবোর্ড: 'Route-4 (Signboard – UIU)',
+    jatrabari: 'Route-5 (Jatrabari – UIU)',
+    যাত্রাবাড়ী: 'Route-5 (Jatrabari – UIU)',
+    uttara: 'Route-6 (Uttara – UIU)',
+    উত্তরা: 'Route-6 (Uttara – UIU)',
+  };
+
+  for (const [kw, routeName] of Object.entries(routeKeywords)) {
+    if (query.includes(kw)) {
+      const matchLine = contextData
+        .split('\n')
+        .find((line) => line.toLowerCase().includes(kw));
+      if (matchLine) {
+        return `${matchLine.replace(/^-\s*/, '')}\n\nTicket price ৳${TICKET_PRICE} (bKash/Nagad/Rocket/UCAM). Jatra-r aager din raat 12-tar moddhe ticket book korte hobe. 🚌`;
+      }
+    }
+  }
+
+  if (contextData) {
+    return `Available seats info:\n${contextData}\n\nTicket price ৳${TICKET_PRICE}. Remember: Thursday & Friday are UIU weekends (no bus service). 🚌`;
+  }
+
+  return `UIU RideWave Assistant-e apnake shagotom! Bus route, stoppage, fare (৳${TICKET_PRICE}), ebong seat availability jante jigesh korte paren. 🚌`;
+}
+

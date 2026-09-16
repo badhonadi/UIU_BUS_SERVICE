@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { ArrowLeft, Download, XCircle, Bus } from 'lucide-react';
 import { format } from 'date-fns';
+import { isTravelDateExpired } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -170,7 +171,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
     );
   }
 
-  const isPast = new Date(ticket.travelDate) < new Date();
+  const isPast = isTravelDateExpired(new Date(ticket.travelDate));
   const cancellationDeadline = new Date(ticket.travelDate);
   cancellationDeadline.setDate(cancellationDeadline.getDate() - 1);
   cancellationDeadline.setHours(20, 0, 0, 0);
@@ -195,10 +196,11 @@ export default function TicketDetailPage({ params }: { params: Promise<{ ticketI
         className="relative border-0 shadow-2xl overflow-hidden rounded-3xl bg-white dark:bg-slate-900 bg-center bg-no-repeat"
         style={{
           backgroundImage: "url('/bus-background.png')",
-          backgroundSize: '80% auto',
+          backgroundSize: '72% auto',
+          backgroundPosition: 'center 72%',
         }}
       >
-        <div className="absolute inset-0 bg-white/90 dark:bg-slate-900/80" aria-hidden="true" />
+        <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70" aria-hidden="true" />
         <div className="bg-gradient-to-r from-[#F37021] to-[#E85D0A] text-white p-6 text-center relative">
           <div className="flex items-center justify-center gap-2 mb-1">
             <Bus size={24} />

@@ -13,6 +13,7 @@ export interface MemoryUser {
   email: string;
   studentId: string;
   password: string;
+  image?: string;
   createdAt: Date;
 }
 
@@ -56,6 +57,15 @@ export interface MemoryTicket {
   createdAt: Date;
 }
 
+export interface MemoryChatMessage {
+  _id: string;
+  userId?: string;
+  sessionId?: string;
+  role: 'user' | 'model';
+  content: string;
+  createdAt: Date;
+}
+
 // Global in-memory cache to persist across hot-reloads
 declare global {
   var memoryStore: {
@@ -63,6 +73,7 @@ declare global {
     routes: MemoryRoute[];
     buses: MemoryBus[];
     tickets: MemoryTicket[];
+    chatMessages: MemoryChatMessage[];
     initialized: boolean;
     persistedLoaded: boolean;
   } | undefined;
@@ -74,6 +85,7 @@ if (!globalThis.memoryStore) {
     routes: [],
     buses: [],
     tickets: [],
+    chatMessages: [],
     initialized: false,
     persistedLoaded: false,
   };
@@ -90,6 +102,7 @@ function loadPersistedStore() {
     const persisted = JSON.parse(fs.readFileSync(persistedStorePath, 'utf8'));
     store.users = Array.isArray(persisted.users) ? persisted.users : [];
     store.tickets = Array.isArray(persisted.tickets) ? persisted.tickets : [];
+    store.chatMessages = Array.isArray(persisted.chatMessages) ? persisted.chatMessages : [];
   } catch (error) {
     console.warn('Could not load local memory DB:', error);
   }
@@ -100,7 +113,15 @@ function persistStore() {
     fs.mkdirSync(path.dirname(persistedStorePath), { recursive: true });
     fs.writeFileSync(
       persistedStorePath,
-      JSON.stringify({ users: store.users, tickets: store.tickets }, null, 2),
+      JSON.stringify(
+        {
+          users: store.users,
+          tickets: store.tickets,
+          chatMessages: store.chatMessages,
+        },
+        null,
+        2
+      ),
       'utf8'
     );
   } catch (error) {
@@ -153,6 +174,20 @@ export const memoryDb = {
   async findUserByStudentId(studentId: string): Promise<MemoryUser | null> {
     initMemoryStore();
     return store.users.find(u => u.studentId === studentId.trim()) || null;
+  },
+
+  async getUserById(userId: string): Promise<MemoryUser | null> {
+    initMemoryStore();
+    return store.users.find((user) => user._id === userId) || null;
+  },
+
+  async updateUserImage(userId: string, image: string | null): Promise<MemoryUser | null> {
+    initMemoryStore();
+    const user = store.users.find((item) => item._id === userId);
+    if (!user) return null;
+    user.image = image ?? undefined;
+    persistStore();
+    return user;
   },
 
   async createUser(data: { name: string; email: string; studentId: string; password: string }): Promise<MemoryUser> {
@@ -262,5 +297,41 @@ export const memoryDb = {
     ticket.paymentStatus = paymentStatus;
     persistStore();
     return ticket;
-  }
+  },
+
+  async saveChatMessage(data: Omit<MemoryChatMessage, '_id' | 'createdAt'>): Promise<MemoryChatMessage> {
+    initMemoryStore();
+    const newMsg: MemoryChatMessage = {
+      ...data,
+      _id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      createdAt: new Date(),
+    };
+    store.chatMessages.push(newMsg);
+    persistStore();
+    return newMsg;
+  },
+
+  async getChatMessages(userId?: string, sessionId?: string, limit = 50): Promise<MemoryChatMessage[]> {
+    initMemoryStore();
+    let msgs = store.chatMessages.filter((m) => {
+      if (userId && m.userId === userId) return true;
+      if (sessionId && m.sessionId === sessionId) return true;
+      return false;
+    });
+
+    return msgs
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      .slice(-limit);
+  },
+
+  async clearChatMessages(userId?: string, sessionId?: string): Promise<boolean> {
+    initMemoryStore();
+    store.chatMessages = store.chatMessages.filter((m) => {
+      if (userId && m.userId === userId) return false;
+      if (sessionId && m.sessionId === sessionId) return false;
+      return true;
+    });
+    persistStore();
+    return true;
+  },
 };

@@ -13,6 +13,12 @@ import { TICKET_PRICE } from '@/lib/constants';
 export const dynamic = 'force-dynamic';
 const useMemoryDb = process.env.NODE_ENV !== 'production' && !process.env.MONGODB_URI;
 
+function getStartOfToday() {
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  return startOfToday;
+}
+
 async function getMongoConnection() {
   const conn = await connectToDatabase();
   if (!conn?.connection || conn.connection.readyState !== 1) {
@@ -28,8 +34,23 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
+    const startOfToday = getStartOfToday();
     if (useMemoryDb) {
-      const tickets = await memoryDb.getUserTickets(session.user.id, status || 'ALL');
+      let tickets = await memoryDb.getUserTickets(
+        session.user.id,
+        status === 'UPCOMING' || status === 'PAST' ? 'ALL' : status || 'ALL'
+      );
+      if (status === 'UPCOMING') {
+        tickets = tickets.filter(
+          (ticket) => ticket.status === 'CONFIRMED' && new Date(ticket.travelDate) >= startOfToday
+        );
+      } else if (status === 'PAST') {
+        tickets = tickets.filter(
+          (ticket) =>
+            (ticket.status === 'CONFIRMED' && new Date(ticket.travelDate) < startOfToday) ||
+            ticket.status === 'USED'
+        );
+      }
       return NextResponse.json({
         tickets: tickets.map((ticket) => ({
           ...ticket,
@@ -40,8 +61,18 @@ export async function GET(request: NextRequest) {
     }
 
     await getMongoConnection();
-    const query: Record<string, string> = { userId: session.user.id };
-    if (status && status !== 'ALL') query.status = status;
+    const query: Record<string, unknown> = { userId: session.user.id };
+    if (status === 'UPCOMING') {
+      query.status = 'CONFIRMED';
+      query.travelDate = { $gte: startOfToday };
+    } else if (status === 'PAST') {
+      query.$or = [
+        { status: 'CONFIRMED', travelDate: { $lt: startOfToday } },
+        { status: 'USED' },
+      ];
+    } else if (status && status !== 'ALL') {
+      query.status = status;
+    }
 
     const tickets = await Ticket.find(query)
       .populate('routeId', 'routeName routeCode routeNumber stops')

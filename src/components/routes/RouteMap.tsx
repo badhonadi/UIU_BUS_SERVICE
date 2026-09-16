@@ -180,7 +180,13 @@ export function RouteMap({ routeName, stops, routeColor }: RouteMapProps) {
     }
 
     if (!cancelled) {
-      const bounds = new google.maps.LatLngBounds();
+      const googleMaps = (window as any).google?.maps;
+      if (!googleMaps) {
+        setLoading(false);
+        return;
+      }
+
+      const bounds = new googleMaps.LatLngBounds();
       routeCoordinates.forEach(({ latitude, longitude }) => bounds.extend({ lat: latitude, lng: longitude }));
       mapRef.current.fitBounds(bounds, 28);
       setLoading(false);
